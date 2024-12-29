@@ -24,19 +24,23 @@ const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
 const CanMsg HYUNDAI_CANFD_HDA2_TX_MSGS[] = {
   {0x50, 0, 16},  // LKAS
   {0x1CF, 1, 8},  // CRUISE_BUTTON
+  {0x1AA, 1, 16}, // CRUISE_BUTTONS_ALT
   {0x2A4, 0, 24}, // CAM_0x2A4
 };
 
 const CanMsg HYUNDAI_CANFD_HDA2_ALT_STEERING_TX_MSGS[] = {
   {0x110, 0, 32}, // LKAS_ALT
   {0x1CF, 1, 8},  // CRUISE_BUTTON
+  {0x1AA, 1, 16}, // CRUISE_BUTTONS_ALT
+  // Needed for cruise control in case of ALT_BUTTONS.
+  {0x1A0, 1, 32}, // CRUISE_INFO
   {0x362, 0, 32}, // CAM_0x362
-  {0x1AA, 1, 16}, // CRUISE_ALT_BUTTONS , carrot
 };
 
 const CanMsg HYUNDAI_CANFD_HDA2_LONG_TX_MSGS[] = {
   {0x50, 0, 16},  // LKAS
   {0x1CF, 1, 8},  // CRUISE_BUTTON
+  {0x1AA, 2, 16}, // CRUISE_BUTTONS_ALT
   {0x2A4, 0, 24}, // CAM_0x2A4
   {0x51, 0, 32},  // ADRV_0x51
   {0x730, 1, 8},  // tester present for ADAS ECU disable
@@ -77,10 +81,10 @@ const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
   {0x12A, 0, 16}, // LFA
   {0x1A0, 0, 32}, // CRUISE_INFO
   {0x1CF, 2, 8},  // CRUISE_BUTTON
+  {0x1AA, 2, 16}, // CRUISE_BUTTONS_ALT
   {0x1E0, 0, 16}, // LFAHDA_CLUSTER
   {0x160, 0, 16}, // ADRV_0x160
   {0x7D0, 0, 8},  // tester present for radar ECU disable
-  {0x1AA, 2, 16}, // CRUISE_ALT_BUTTONS , carrot
 };
 
 
@@ -314,8 +318,14 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
   }
 
   // cruise buttons check
-  if (addr == 0x1cf) {
-    int button = GET_BYTE(to_send, 2) & 0x7U;
+  const int button_addr = hyundai_canfd_alt_buttons ? 0x1aa : 0x1cf;
+  if (addr == button_addr) {
+    int button = 0;
+    if (addr == 0x1cf) {
+      button = GET_BYTE(to_send, 2) & 0x7U;
+    } else {
+      button = (GET_BYTE(to_send, 4) >> 4) & 0x7U;
+    }
     bool is_cancel = (button == HYUNDAI_BTN_CANCEL);
     bool is_resume = (button == HYUNDAI_BTN_RESUME);
     bool is_set = (button == HYUNDAI_BTN_SET);
@@ -437,7 +447,7 @@ static int hyundai_canfd_fwd_hook(int bus_num, int addr) {
       //if (addr == 908) bus_fwd = -1;
       //else if (addr == 1402) bus_fwd = -1;
       //
-      // ¾Æ·¡ÄÚµåÁß ¿ÀÅä»óÇâµîÄÚµå ÀÖÀ½.. ¤»
+      // ï¿½Æ·ï¿½ï¿½Úµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½.. ï¿½ï¿½
       //if (addr == 698) bus_fwd = -1;
       //if (addr == 1848) bus_fwd = -1;
       //if (addr == 1996) bus_fwd = -1;

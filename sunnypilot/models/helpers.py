@@ -22,7 +22,7 @@ async def verify_file(file_path: str, expected_hash: str) -> bool:
   return sha256_hash.hexdigest().lower() == expected_hash.lower()
 
 
-def get_active_bundle(params: Params) -> custom.ModelManagerSP.ModelBundle:
+def get_active_bundle(params: Params = None) -> custom.ModelManagerSP.ModelBundle:
   """Gets the active model bundle from cache"""
   if params is None:
     params = Params()
@@ -33,21 +33,39 @@ def get_active_bundle(params: Params) -> custom.ModelManagerSP.ModelBundle:
   return None
 
 
-def get_model_runner_by_filename(filename: str) -> custom.ModelManagerSP.Runner:
-  if filename.endswith(".thneed"):
-    return custom.ModelManagerSP.Runner.snpe
+def get_active_model_runner(params: Params = None, force_check=False) -> custom.ModelManagerSP.Runner:
+  """
+  Determines and returns the active model runner type, based on provided parameters.
+  The function utilizes caching to prevent redundant calculations and checks.
 
-  if filename.endswith("_tinygrad.pkl"):
-    return custom.ModelManagerSP.Runner.tinygrad
+  If the cached "ModelRunnerTypeCache" exists in the provided parameters and `force_check`
+  is set to False, the cached value is directly returned. Otherwise, the function determines
+  the runner type based on the active model bundle. If a model bundle containing a drive
+  model exists, the runner type is derived based on the filename of the drive model.
+  Finally, it updates the cache with the determined runner type, if needed.
 
-
-def get_active_model_runner(params: Params) -> custom.ModelManagerSP.Runner:
-  """Gets the model runner from the active model bundle. If no active bundle, returns tinygrad"""
+  :param params: The parameter set used to retrieve caching and runner details. If `None`,
+      a default `Params` instance is created internally.
+  :type params: Params
+  :param force_check: A flag indicating whether to bypass cached results and always
+      re-determine the runner type. Defaults to `False`.
+  :type force_check: bool
+  :return: The determined or cached model runner type.
+  :rtype: custom.ModelManagerSP.Runner
+  """
   if params is None:
     params = Params()
 
-  if active_bundle := get_active_bundle(params):
-    drive_model = next(model for model in active_bundle.models if model.type == custom.ModelManagerSP.Type.drive)
-    return get_model_runner_by_filename(drive_model.fileName)
+  if (cached_runner_type := params.get("ModelRunnerTypeCache")) and not force_check:
+    if isinstance(cached_runner_type, str) and cached_runner_type.isdigit():
+      return int(cached_runner_type)
 
-  return custom.ModelManagerSP.Runner.tinygrad
+  runner_type = custom.ModelManagerSP.Runner.tinygrad
+
+  if active_bundle := get_active_bundle(params):
+    runner_type = active_bundle.runner.raw
+
+  if cached_runner_type != runner_type:
+    params.put("ModelRunnerTypeCache", str(int(runner_type)))
+
+  return runner_type

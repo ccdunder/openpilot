@@ -89,6 +89,7 @@ private:
 
 std::unordered_map<std::string, uint32_t> keys = {
     {"AccessToken", CLEAR_ON_MANAGER_START | DONT_LOG},
+    {"AdbEnabled", PERSISTENT},
     {"AlwaysOnDM", PERSISTENT},
     {"ApiCache_Device", PERSISTENT},
     {"AssistNowToken", PERSISTENT},
@@ -133,7 +134,6 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"GsmRoaming", PERSISTENT | BACKUP},
     {"HardwareSerial", PERSISTENT},
     {"HasAcceptedTerms", PERSISTENT},
-    {"IMEI", PERSISTENT},
     {"InstallDate", PERSISTENT},
     {"IsDriverViewEnabled", CLEAR_ON_MANAGER_START},
     {"IsEngaged", PERSISTENT},
@@ -202,7 +202,15 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"Version", PERSISTENT},
 
     // --- sunnypilot params --- //
+    {"ApiCache_DriveStats", PERSISTENT},
+    {"CarParamsSP", CLEAR_ON_MANAGER_START | CLEAR_ON_ONROAD_TRANSITION},
+    {"CarParamsSPCache", CLEAR_ON_MANAGER_START},
+    {"CarParamsSPPersistent", PERSISTENT},
+    {"CarPlatformBundle", PERSISTENT},
     {"EnableGithubRunner", PERSISTENT | BACKUP},
+    {"ModelRunnerTypeCache", CLEAR_ON_ONROAD_TRANSITION},
+    {"OffroadMode", CLEAR_ON_MANAGER_START},
+    {"OffroadMode_Status", CLEAR_ON_MANAGER_START},
 
     // MADS params
     {"Mads", PERSISTENT | BACKUP},
@@ -222,6 +230,14 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"SunnylinkDongleId", PERSISTENT},
     {"SunnylinkdPid", PERSISTENT},
     {"SunnylinkEnabled", PERSISTENT},
+
+    // sunnypilot car specific params
+    {"HyundaiRadarTracks", PERSISTENT},
+    {"HyundaiRadarTracksConfirmed", PERSISTENT},
+    {"HyundaiRadarTracksPersistent", PERSISTENT},
+    {"HyundaiRadarTracksToggle", PERSISTENT},
+
+    {"DynamicExperimentalControl", PERSISTENT},
 };
 
 } // namespace
